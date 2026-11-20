@@ -1,54 +1,173 @@
-# VALIA — backend (Global Solution · Java Advanced · CitizenTech)
+# Valia — Global Solution 2026/2
 
-API REST em **Java 21 + Spring Boot** que ajuda trabalhadores (domésticos, informais e CLT) a identificar
-**possíveis** irregularidades nas próprias condições de trabalho e a estimar **valores de referência**
-que deixaram de receber. A mesma API é consumida pelo app Mobile.
+## Sobre o projeto
 
-> Os resultados são sinais e valores de referência, **não** parecer jurídico. Toda resposta de relatório traz esse aviso.
+O Valia é uma plataforma desenvolvida com o objetivo de promover condições de trabalho mais justas, permitindo que trabalhadores registrem e acompanhem suas jornadas, vínculos empregatícios e pagamentos, além de identificar possíveis irregularidades trabalhistas por meio de inteligência artificial.
 
-## Sumário
+O projeto busca proporcionar maior transparência, segurança e acesso à informação nas relações de trabalho.
 
-1. [Como funciona](#como-funciona)
-2. [Opção escolhida no requisito 5](#opção-escolhida-no-requisito-5-a-mensageria-com-rabbitmq)
-3. [Tecnologias](#tecnologias)
-4. [Tutorial: do zero até a API rodando](#tutorial-do-zero-até-a-api-rodando)
-5. [Tutorial: IA com Ollama](#tutorial-ia-com-ollama)
-6. [Tutorial: usando o Swagger](#tutorial-usando-o-swagger)
-7. [Usuários de teste](#usuários-de-teste)
-8. [Perfis e autorização](#perfis-e-autorização)
-9. [Principais endpoints](#principais-endpoints)
-10. [Problemas comuns](#problemas-comuns)
-11. [Modelagem, motor de regras, compliance e DevOps](#modelagem)
+## Objetivo — DevOps
 
-## Como funciona
+A proposta desta entrega é implementar um ambiente de integração e entrega contínua (CI/CD), utilizando os serviços do Azure DevOps e da Microsoft Azure para automatizar a compilação, execução de testes e implantação da aplicação backend.
 
-1. A pessoa descreve a rotina em texto livre → **Spring AI** (modelo local via Ollama) extrai os campos (`POST /ia/interpretar-relato`) e o app pré-preenche vínculo e jornada.
-2. Ela cadastra o **vínculo**, as **jornadas** e os **pagamentos** recebidos.
-3. Solicita uma **análise** de um período (`POST /vinculos/{id}/analises`). A API responde `202` e publica um evento no **RabbitMQ**.
-4. O consumidor roda o **motor de regras determinístico** (horas extras, intervalos, descanso entre jornadas, salário mínimo proporcional, diferença de pagamento) e usa a IA só para **explicar o resultado em linguagem simples**.
-5. O app consulta `GET /analises/{id}` até o status ser `CONCLUIDO`.
+## Tecnologias utilizadas
 
-A IA **nunca calcula nem decide**: o cálculo jurídico/financeiro é código determinístico, versionado e testado.
+- Java 21
+- Spring Boot
+- Spring Security e JWT
+- Spring AI
+- Maven
+- Oracle Database
+- RabbitMQ
+- Ollama
+- Swagger
+- Azure DevOps
+- Azure Boards
+- Azure Repos
+- Azure Pipelines
+- Azure App Service
+- Azure CLI
+- PowerShell
 
-## Opção escolhida no requisito 5: A) Mensageria com RabbitMQ
+## Arquitetura Macro
 
-Evento `análise solicitada` publicado por `AnaliseService` e consumido de forma assíncrona por `AnaliseSolicitadaListener`
-(fila `valia.analise.solicitada`). A mensagem contém só o id do relatório; nenhum dado pessoal trafega pela fila.
+![Arquitetura Macro](docs/arquitetura.png)
 
-## Tecnologias
+A arquitetura proposta utiliza o Azure DevOps para gerenciamento de tarefas, versionamento do código-fonte e automação das etapas de integração e entrega contínua.
 
-Java 21, Spring Boot, Spring Data JPA (PostgreSQL), Spring Security + JWT (jjwt), **Spring AI (Ollama, modelo local)**,
-Spring AMQP (RabbitMQ), Bean Validation, springdoc-openapi (Swagger), Lombok, JUnit 5, Docker, GitHub Actions.
+A aplicação será hospedada no Azure App Service, utilizando Java 21 e conexão JDBC com o banco de dados Oracle.
+
+## Infraestrutura Azure
+
+| Recurso | Nome | Finalidade |
+|---|---|---|
+| Resource Group | rg-valia | Organização dos recursos |
+| App Service Plan | asp-valia | Ambiente de hospedagem |
+| Azure Web App | app-valia | Execução da API Java |
+| Oracle Database | Banco externo | Persistência dos dados |
+| Service Connection | sc-valia-arm | Integração entre Azure DevOps e Azure |
+
+## Pipeline CI/CD
+
+### Continuous Integration (CI)
+
+A etapa de integração contínua foi planejada para executar automaticamente após a integração das alterações na branch Main.
+
+- Compilação da aplicação com Maven;
+- Execução dos testes automatizados;
+- Publicação dos resultados dos testes;
+- Geração do artefato JAR;
+- Publicação do artefato no Azure Pipelines.
+
+### Continuous Delivery (CD)
+
+A etapa de entrega contínua é responsável pela implantação da aplicação no ambiente Azure.
+
+- Download do artefato publicado na etapa de CI;
+- Autenticação na Azure por meio da Service Connection;
+- Deploy da aplicação no Azure App Service.
+
+## Estratégia de versionamento
+
+O projeto utiliza Git e Azure Repos para gerenciamento do código-fonte.
+
+O fluxo de desenvolvimento proposto consiste em:
+
+1. Criação de uma tarefa no Azure Boards;
+2. Criação de uma branch de desenvolvimento;
+3. Desenvolvimento e realização de commits;
+4. Abertura de um Pull Request;
+5. Revisão e aprovação das alterações;
+6. Integração na branch Main;
+7. Execução automática da pipeline CI/CD.
+
+## Estrutura do projeto
+
+- `/src` — Código-fonte da aplicação Java.
+- `/scripts` — Scripts de provisionamento da infraestrutura e banco de dados.
+- `/docs` — Documentação e arquitetura macro.
+- `pom.xml` — Dependências e configurações Maven.
+- `docker-compose.yml` — Ambiente de desenvolvimento local.
+- `azure-pipeline.yml` — Configuração da pipeline CI/CD.
+- `README.md` — Documentação do projeto.
+
+## Como executar localmente
+
+### Pré-requisitos
+
+- Java JDK 21;
+- Maven;
+- Oracle Database;
+- RabbitMQ;
+- Docker, caso seja utilizado o ambiente local em containers.
+
+### Configuração das variáveis de ambiente
+
+| Variável | Descrição |
+|---|---|
+| DB_URL | URL JDBC de conexão com o Oracle |
+| DB_USER | Usuário do banco de dados |
+| DB_PASSWORD | Senha do banco de dados |
+| RABBIT_HOST | Endereço do RabbitMQ |
+| RABBIT_PORT | Porta do RabbitMQ |
+| RABBIT_USER | Usuário do RabbitMQ |
+| RABBIT_PASSWORD | Senha do RabbitMQ |
+| JWT_SECRET | Chave de autenticação JWT |
+| OLLAMA_BASE_URL | Endereço do serviço Ollama |
+| SEED_ENABLED | Habilitação dos dados de demonstração |
+
+As credenciais devem ser configuradas por meio de variáveis de ambiente, evitando sua exposição no repositório.
+
+### Compilar e executar os testes
+
+```bash
+mvn clean package
+```
+
+### Executar a aplicação
+
+```bash
+mvn spring-boot:run
+```
+
+### Acessar a documentação Swagger
+
+Com a aplicação em execução:
+
+http://localhost:8080/swagger-ui.html
+
+## Provisionamento da infraestrutura
+
+Os scripts disponíveis na pasta `/scripts` foram elaborados utilizando Azure CLI e PowerShell, com o objetivo de automatizar a criação e configuração dos recursos necessários para hospedagem da aplicação.
+
+Para autenticação na Azure:
+
+```powershell
+az login
+```
+
+Os scripts devem ser revisados e configurados de acordo com a assinatura Azure utilizada antes de sua execução.
+
+## Segurança
+
+A solução contempla as seguintes práticas de segurança:
+
+- Autenticação através de tokens JWT;
+- Gerenciamento de credenciais por variáveis de ambiente;
+- Controle de acesso ao repositório;
+- Revisão de código por Pull Requests;
+- Separação entre código-fonte e configurações sensíveis.
+
+## Status da entrega
+
+A arquitetura macro e a estratégia de infraestrutura foram definidas, juntamente com a configuração proposta para a pipeline CI/CD.
+
+Devido a dificuldades durante a configuração do ambiente Azure e ao prazo de entrega, a implantação definitiva da aplicação e a validação completa da pipeline não foram concluídas.
+
+As integrações externas com Oracle Database, RabbitMQ e Ollama ainda necessitam de validação no ambiente de nuvem.
+
+## Utilização de inteligência artificial
+
+Durante o desenvolvimento, foram utilizadas ferramentas de inteligência artificial generativa como apoio na elaboração da documentação, definição da arquitetura, configuração de scripts e desenvolvimento da pipeline CI/CD.
 
 ---
-
-## Tutorial: do zero até a API rodando
-
-### O que instalar antes
-
-| Programa | Para quê | Onde baixar |
-|---|---|---|
-| **JDK 21** | rodar o Java | https://adoptium.net |
-| **Docker Desktop** | PostgreSQL e RabbitMQ | https://www.docker.com/products/docker-desktop |
-| **Ollama** | IA local (veja o tutorial abaixo) | https://ollama.com/download |
-| **IntelliJ IDEA** (opcional) | abrir
